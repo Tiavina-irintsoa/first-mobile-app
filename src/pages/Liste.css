@@ -1,0 +1,21 @@
+ion-col {
+  text-align: center;
+  width: 30%;
+  height: 6vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+ion-grid> ion-row:nth-child(odd):not(:first-child) {
+    background-color: #f5f5f5;
+}
+.head {
+  background-color: #135d54;
+  font-size: 15px !important;
+  color: white !important;
+  font-weight: bold;
+  height: 6vh;
+}
+ion-grid{
+    padding: 10px;
+}
