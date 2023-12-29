@@ -12,8 +12,16 @@ import {
   IonGrid,
   IonRow,
   IonCol,
+  useIonActionSheet,
+  IonActionSheet,
+  IonIcon,
+  IonButton,
 } from "@ionic/react";
-import { chevronDownCircleOutline } from "ionicons/icons";
+import {
+  chevronDownCircleOutline,
+  ellipsisHorizontalOutline,
+  logoIonic,
+} from "ionicons/icons";
 import "./Liste.css";
 const fetchData = async (setData, setLoading) => {
   try {
@@ -24,7 +32,6 @@ const fetchData = async (setData, setLoading) => {
       throw new Error("Réponse réseau incorrecte");
     }
     const data = await response.json();
-    console.log(data);
     setData(data.data);
   } catch (error) {
     console.error("Erreur lors de la récupération des données API:", error);
@@ -37,6 +44,7 @@ function Liste() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState([]);
+  const [present] = useIonActionSheet();
   useEffect(() => {
     fetchData(setData, setLoading);
   }, []); // Le tableau vide [] en tant que deuxième argument signifie que cela ne s'exécutera qu'une seule fois lors du montage du composant
@@ -51,9 +59,29 @@ function Liste() {
     setResults(
       data.filter(
         (d) =>
-          d["bookName"].toLowerCase().indexOf(query) > -1 || d["id"].toString().indexOf(query) > -1
+          d["bookName"].toLowerCase().indexOf(query) > -1 ||
+          d["id"].toString().indexOf(query) > -1
       )
     );
+  };
+
+  const handleSubmit = async (action, item) => {
+    switch (action) {
+      case "delete":
+        // setData((data) => data.filter((d) => item.id != d.id));
+        let newData = (data) => data.filter((d) => item.id != d.id);
+        setResults(newData);
+        setData(newData);
+        await fetch(
+          `https://deploiement-spring-boot-production.up.railway.app/books/${item["id"]}`,
+          {
+            method: "DELETE",
+          }
+        );
+        break;
+      default:
+        console.log("Unknown action:", action);
+    }
   };
 
   function handleRefresh(event) {
@@ -70,8 +98,8 @@ function Liste() {
       if (event.detail) {
         event.detail.complete();
       }
-    }, 2000);
-    setResults([...data]);
+      setResults([...data]);
+    }, 1000);
   }
 
   return (
@@ -99,17 +127,50 @@ function Liste() {
         </IonRefresher>
 
         {loading ? (
-          <IonLoading isOpen={loading} message="Chargement des données..." />
+          <IonLoading isOpen={loading} message="Loading data..." />
         ) : (
           <IonGrid>
             <IonRow className="head">
               <IonCol size="3">Id</IonCol>
-              <IonCol size="9">Name</IonCol>
+              <IonCol size="7">Name</IonCol>
+              <IonCol size="2"></IonCol>
             </IonRow>
             {results.map((item, index) => (
               <IonRow key={index}>
                 <IonCol size="3">{item["id"]}</IonCol>
-                <IonCol size="9">{item["bookName"]}</IonCol>
+                <IonCol size="7">{item["bookName"]}</IonCol>
+                <IonCol size="2">
+                  <IonIcon
+                    icon={ellipsisHorizontalOutline}
+                    onClick={() =>
+                      present({
+                        header: item["bookName"],
+                        buttons: [
+                          {
+                            text: "Delete",
+                            role: "destructive",
+                            handler: () => {
+                              handleSubmit("delete", item); // Envoyer des données avec l'action "delete"
+                            },
+                          },
+                          {
+                            text: "Share",
+                            handler: () => {
+                              handleSubmit("share", item); // Envoyer des données avec l'action "share"
+                            },
+                          },
+                          {
+                            text: "Cancel",
+                            role: "cancel",
+                            handler: () => {
+                              handleSubmit("cancel", item); // Envoyer des données avec l'action "cancel"
+                            },
+                          },
+                        ],
+                      })
+                    }
+                  ></IonIcon>
+                </IonCol>
               </IonRow>
             ))}
           </IonGrid>
